@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Library Analytics Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root { --navy:#2E5A88; --accent:#4C8BF5; --light:#7FB2F0; --orange:#F2A65A; --pink:#E85D75; --bg:#f4f6f9; --card:#fff; --text:#1f2937; --muted:#6b7280; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text); }
+  header { background:linear-gradient(135deg,#1c3a5e,var(--navy)); color:#fff; padding:32px 40px; }
+  header h1 { margin:0 0 4px; font-size:1.6rem; } header p { margin:0; opacity:.85; font-size:.95rem; }
+  .container { padding:28px 40px 50px; max-width:1150px; margin:0 auto; }
+  .kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:30px; }
+  .kpi-card { background:var(--card); border-radius:12px; padding:18px 20px; box-shadow:0 2px 8px rgba(0,0,0,.06); border-left:4px solid var(--accent); }
+  .kpi-card .label { color:var(--muted); font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; }
+  .kpi-card .value { font-size:1.35rem; font-weight:700; color:var(--navy); margin-top:4px; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  .card { background:var(--card); border-radius:12px; padding:20px 22px 10px; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+  .card h3 { margin:0 0 12px; font-size:1rem; color:var(--navy); }
+  .card.full { grid-column:1/-1; }
+  @media (max-width:800px){ .grid{grid-template-columns:1fr;} header,.container{padding-left:20px;padding-right:20px;} }
+</style>
+</head>
+<body>
+<header><h1>📚 Library Analytics Dashboard</h1><p>SQL-driven insights from a library management system — loans, overdue tracking, genre trends</p></header>
+<div class="container">
+  <div class="kpi-grid" id="kpi-grid"></div>
+  <div class="grid">
+    <div class="card full"><h3>Monthly Loan Volume</h3><canvas id="monthlyChart"></canvas></div>
+    <div class="card"><h3>Top 10 Most Borrowed Books</h3><canvas id="booksChart"></canvas></div>
+    <div class="card"><h3>Loans by Genre</h3><canvas id="genreChart"></canvas></div>
+  </div>
+</div>
+<script>
+const DATA = {"top_books": {"labels": ["Sapiens: A Retelling", "Fractured Light", "Where the Rivers Meet", "Atomic Habits Revisited", "Northern Lights Falling", "The Midnight Library Card", "The Fisherman's Daughter", "Ashes and Amber", "Homegoing Ways", "The Last Harvest"], "values": [122, 83, 80, 74, 64, 63, 62, 57, 54, 46]}, "monthly": {"labels": ["2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06", "2026-07"], "values": [78, 61, 69, 62, 83, 54, 65, 60, 67, 63, 60, 62, 70, 58, 69, 60, 67, 62, 4]}, "genre": {"labels": ["Self-Help", "Literary Fiction", "Science Fiction", "Fantasy", "Biography", "History", "Romance", "Non-Fiction"], "values": [258, 258, 233, 160, 106, 63, 57, 39]}, "kpis": {"total_loans_top10": 705, "most_borrowed": "Sapiens: A Retelling", "overdue_count": 127, "longest_overdue": 557, "busiest_month": "2025-05", "months_tracked": 19}};
+const palette = ['#2E5A88','#4C8BF5','#7FB2F0','#F2A65A','#E85D75','#8E6C88','#5BA88F','#C9A227'];
+
+const kpiGrid = document.getElementById('kpi-grid');
+kpiGrid.innerHTML = `
+  <div class="kpi-card"><div class="label">Total Loans (Top 10 Books)</div><div class="value">${DATA.kpis.total_loans_top10}</div></div>
+  <div class="kpi-card"><div class="label">Most Borrowed</div><div class="value" style="font-size:1rem">${DATA.kpis.most_borrowed}</div></div>
+  <div class="kpi-card"><div class="label">Currently Overdue</div><div class="value">${DATA.kpis.overdue_count}</div></div>
+  <div class="kpi-card"><div class="label">Longest Overdue</div><div class="value">${DATA.kpis.longest_overdue}d</div></div>
+  <div class="kpi-card"><div class="label">Busiest Month</div><div class="value">${DATA.kpis.busiest_month}</div></div>
+  <div class="kpi-card"><div class="label">Months Tracked</div><div class="value">${DATA.kpis.months_tracked}</div></div>
+`;
+
+Chart.defaults.font.family = "'Segoe UI', sans-serif";
+
+new Chart(document.getElementById('monthlyChart'), {
+  type: 'line',
+  data: { labels: DATA.monthly.labels, datasets: [{ label:'Loans', data: DATA.monthly.values, borderColor:'#2E5A88', backgroundColor:'rgba(76,139,245,0.15)', fill:true, tension:0.3, pointRadius:3 }] },
+  options: { responsive:true, plugins:{legend:{display:false}} }
+});
+new Chart(document.getElementById('booksChart'), {
+  type: 'bar',
+  data: { labels: DATA.top_books.labels, datasets: [{ label:'Times Borrowed', data: DATA.top_books.values, backgroundColor: palette, borderRadius:5 }] },
+  options: { indexAxis:'y', responsive:true, plugins:{legend:{display:false}} }
+});
+new Chart(document.getElementById('genreChart'), {
+  type: 'doughnut',
+  data: { labels: DATA.genre.labels, datasets:[{ data: DATA.genre.values, backgroundColor: palette, borderColor:'#fff', borderWidth:2 }] },
+  options: { responsive:true, plugins:{legend:{position:'bottom', labels:{boxWidth:12, font:{size:11}}}} }
+});
+</script>
+</body>
+</html>
